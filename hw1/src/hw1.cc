@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <string>
 
 using namespace std;
 
@@ -17,6 +18,27 @@ char *F_UDP = "/proc/net/udp";
 char *F_TCP6 = "/proc/net/tcp6";
 char *F_UDP6 = "/proc/net/udp6";
 char *FD = "/proc/%s/fd/";
+
+class Proc{
+public:
+	string proto;
+	string p_name;
+	string l_ip;
+	string l_port;
+	string r_ip;
+	string r_port;
+	string inode;
+
+	Proc() {
+		proto = "";
+		p_name = "";
+		l_ip = "";
+		l_port = "";
+		r_ip = "";
+		r_port = "";
+		inode = "";
+	}
+};
 
 void find_inode(string &res, string str)
 {
@@ -114,15 +136,18 @@ string search_fd(string inode)
 	return "";
 }
 
-void hex_to_port(string input)
+string hex_to_port(string input)
 {
 	unsigned int number = (int) strtol(input.c_str(), NULL, 16);
 
 	char *PORT = ":%d";
 	if(number == 0) {
-		printf(":*");
+		return string("*");
 	} else {
-		printf(PORT, number);
+		char buffer [33];
+		sprintf(buffer,"%d",number);
+		// itoa(number, buffer, 10);
+		return string(buffer);
 	}
 }
 
@@ -149,6 +174,7 @@ void hex_to_ip4(string input)
 void output_result(char *proto_type, vector<vector<string> > table_data)
 {
 	string p_name;
+	int width = 30;
 	const char *table_head[4] = { "proto", "Local Address", "Foreign Address", "PID/Program name and arguments" };
 
 	// print banner
@@ -157,13 +183,16 @@ void output_result(char *proto_type, vector<vector<string> > table_data)
 
 	// print table head
 	for(int i=0; i<4; i++) {
-		cout << table_head[i] << "\t\t";
+		cout << left << setw(width) << table_head[i];
 	}
 	cout << "\n";
+
+	vector<Proc*> p_v;
 
 	// print table data
 	for(int i=0; i<table_data.size(); i++) {
 		if(i == 0) continue;
+		Proc *p = new Proc();
 
 		for(int j=0; j<3; j++) {
 			if(j>0 && j<3){
@@ -174,29 +203,50 @@ void output_result(char *proto_type, vector<vector<string> > table_data)
 				// ip
 				if(tmp_ip[0].length() == 8) {
 					// cout << tmp_ip[0] << '\t';
-					hex_to_ip4(tmp_ip[0]);
+					// hex_to_ip4(tmp_ip[0]);
+					struct in_addr sa;
+					sa.s_addr = (int)strtol(tmp_ip[0].c_str(), NULL, 16);
+					char strB[20];
+					inet_ntop(AF_INET, &sa.s_addr, strB, sizeof strB);
+					if(j == 1) p->l_ip = strB;
+					else p->r_ip = strB;
 				} else if(tmp_ip[0].length() == 32) {
 					// cout << tmp_ip[0];
 					struct in_addr sa;
 					sa.s_addr = (int)strtol(tmp_ip[0].c_str(), NULL, 16);
 					char strA[50];
 					inet_ntop(AF_INET6, &sa.s_addr, strA, sizeof strA);
-					cout << strA;
+					// cout << strA;
+					if(j == 1) p->l_ip = strA;
+					else p->r_ip = strA;
 				}
 
 				// port
-				hex_to_port(tmp_ip[1]);
-				cout << "\t\t";
+				string port = hex_to_port(tmp_ip[1]);
+				if(j == 1) p->l_port = port;
+				else p->r_port = port;
+				// cout << "\t\t";
 			} 
 			else if(j == 0){
-				cout << table_data[i][j] << "\t\t";
+				p->proto = table_data[i][j];
+				// cout << table_data[i][j] << "\t\t";
 			}
 		}
 		p_name = search_fd(table_data[i][9]);
-		cout << table_data[i][9];
-		if(p_name != "") {
-			cout << "/" << p_name;
-		}
+		p->p_name = p_name;
+		p->inode = table_data[i][9];
+		// if(p_name != "") {
+		// 	cout << "/" << p_name;
+		// }
+		// cout << "\n";
+		p_v.push_back(p);
+	}
+	
+	for(int i=0; i<p_v.size(); i++) {
+		cout << left << setw(width) << p_v[i]->proto;
+		cout << left << setw(width) << p_v[i]->l_ip+":"+p_v[i]->l_port;
+		cout << left << setw(width) << p_v[i]->r_ip+":"+p_v[i]->r_port;
+		cout << left << setw(width) << p_v[i]->inode+"/"+p_v[i]->p_name;
 		cout << "\n";
 	}
 }
