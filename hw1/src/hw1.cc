@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <vector>
 #include<bits/stdc++.h> 
+#include <dirent.h>
+#include <sys/types.h>
 
 using namespace std;
 
@@ -11,6 +13,30 @@ char *F_TCP = "/proc/net/tcp";
 char *F_UDP = "/proc/net/udp";
 char *F_TCP6 = "/proc/net/tcp6";
 char *F_UDP6 = "/proc/net/udp6";
+
+class Proc
+{
+public:
+	string proto, p_name, local_addr, remo_addr;
+	int pid, local_port, remo_port;
+
+	Proc() {
+		pid = 0;
+		local_addr = "";
+		local_port = 0;
+		remo_addr = "";
+		remo_port = 0;
+		proto = "";
+		p_name = "";
+	}
+}
+
+void traverse_p()
+{
+	dirent *fd;
+
+	fd = opendir("/proc/")
+}
 
 vector<string> split(const string &str, const string &delim)
 {
@@ -82,7 +108,7 @@ void output_result(char *proto_type, vector<vector<string> > table_data)
 	cout << "\n";
 
 	// print table data
-	for(int i=0; i<table_data.size()-3; i++) {
+	for(int i=0; i<table_data.size(); i++) {
 		if(i == 0) continue;
 
 		for(int j=0; j<3; j++) {
@@ -94,6 +120,8 @@ void output_result(char *proto_type, vector<vector<string> > table_data)
 				// ip
 				if(tmp_ip[0].length() == 8) {
 					hex_to_ip4(tmp_ip[0]);
+				} else if(tmp_ip[0].length() == 32) {
+					cout << tmp_ip[0];
 				}
 
 				// port
@@ -106,8 +134,6 @@ void output_result(char *proto_type, vector<vector<string> > table_data)
 		}
 		cout << "\n";
 	}
-
-	cout << "endl" << endl;
 }
 
 vector<vector<string> > read_data(ifstream &fp, string proto)
@@ -125,6 +151,10 @@ vector<vector<string> > read_data(ifstream &fp, string proto)
 	return res;
 }
 
+
+
+
+
 int main()
 {
 	ifstream fp_tcp(F_TCP), fp_udp(F_UDP), fp_tcp6(F_TCP6), fp_udp6(F_UDP6);
@@ -137,16 +167,11 @@ int main()
 	table_data = read_data(fp_tcp, "tcp");
 	output_result("TCP", table_data);
 
-	// table_data = read_data(fp_tcp6, "tcp6");
-	// output_result("TCP", table_data);
+	table_data = read_data(fp_tcp6, "tcp6");
+	output_result("TCP", table_data);
 
-	// for(int i=0; i<table_data.size(); i++) {
-	// 	if(i == 0) continue;
-	// 	for(int j=0; j<3; j++) {
-	// 		cout << table_data[i][j] << '\t';
-	// 	}
-	// 	cout << "\n";
-	// }
+	string a = "0000000000000000FFFF0000BF00A8C0";
+	cout << a.length();
 	
 	return 0;
 }
