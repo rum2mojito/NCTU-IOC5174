@@ -6,6 +6,8 @@
 #include<bits/stdc++.h> 
 #include <dirent.h>
 #include <sys/types.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -13,29 +15,27 @@ char *F_TCP = "/proc/net/tcp";
 char *F_UDP = "/proc/net/udp";
 char *F_TCP6 = "/proc/net/tcp6";
 char *F_UDP6 = "/proc/net/udp6";
+char *FD = "/proc/%s/fd/";
 
-class Proc
+void find_inode(string &res, string str)
 {
-public:
-	string proto, p_name, local_addr, remo_addr;
-	int pid, local_port, remo_port;
+	bool record = false;
+	string socket_cmp, socket = "socket";
+	socket_cmp = socket_cmp.assign(str, 0, 6); 
 
-	Proc() {
-		pid = 0;
-		local_addr = "";
-		local_port = 0;
-		remo_addr = "";
-		remo_port = 0;
-		proto = "";
-		p_name = "";
+	if(socket_cmp != socket) return;
+
+	for(int i=0; i<str.length(); i++) {
+		if(str[i] == ']') break;
+
+		if(record) {
+			// cout << str[i] << endl;;
+			res.append(1, str[i]);
+		}
+
+		if(str[i] == '[') record = true;
 	}
-}
-
-void traverse_p()
-{
-	dirent *fd;
-
-	fd = opendir("/proc/")
+	// if(res != "") cout << res << endl;
 }
 
 vector<string> split(const string &str, const string &delim)
@@ -59,6 +59,60 @@ vector<string> split(const string &str, const string &delim)
 	free(p);
 
 	return res;
+}
+
+string search_fd(string inode)
+{
+	struct dirent *dp;
+	struct dirent *sub_dp;
+    char *fullpath;
+    const char *path="/proc/";
+
+    DIR *dir = opendir(path);
+    while (dp=readdir(dir))
+    {
+		char checkpath[100] = "/proc/";
+		strcat(checkpath, dp->d_name);
+		strcat(checkpath, "/fd/");
+		DIR *check_dir = opendir(checkpath);
+		if (check_dir) {
+			DIR *sub_dir = opendir(checkpath);
+			while(sub_dp = readdir(sub_dir)) {
+				char fd_path[100];
+				char readlink_buf[100];
+				strcpy(fd_path, checkpath);
+				strcat(fd_path, sub_dp->d_name);
+
+				readlink(fd_path, readlink_buf, 100);
+				string readlink_buf_str(readlink_buf);
+				string match_node = "";
+
+				find_inode(match_node, readlink_buf_str);
+				if(match_node != "") {
+					if(match_node == inode) {
+						char status[100] = "/proc/";
+						strcat(status, dp->d_name);
+						strcat(status, "/status");
+						ifstream fp_status(status);
+						if(!fp_status) {
+							return "";
+						}
+						string data;
+						vector<string> para;
+						getline(fp_status, data);
+						para = split(data, "\t");
+						
+						//cout << para[1] << endl;
+						// printf("%s\t\t%s\n", fd_path, match_node.c_str());
+						return para[1];
+					}
+				}
+			}
+			closedir(check_dir);
+		}
+    }
+    closedir(dir); 
+	return "";
 }
 
 void hex_to_port(string input)
@@ -95,6 +149,7 @@ void hex_to_ip4(string input)
 
 void output_result(char *proto_type, vector<vector<string> > table_data)
 {
+	string p_name;
 	const char *table_head[4] = { "proto", "Local Address", "Foreign Address", "PID/Program name and arguments" };
 
 	// print banner
@@ -132,6 +187,11 @@ void output_result(char *proto_type, vector<vector<string> > table_data)
 				cout << table_data[i][j] << "\t\t";
 			}
 		}
+		p_name = search_fd(table_data[i][9]);
+		cout << table_data[i][9];
+		if(p_name != "") {
+			cout << "/" << p_name;
+		}
 		cout << "\n";
 	}
 }
@@ -151,24 +211,28 @@ vector<vector<string> > read_data(ifstream &fp, string proto)
 	return res;
 }
 
-
-
-
-
 int main()
 {
 	ifstream fp_tcp(F_TCP), fp_udp(F_UDP), fp_tcp6(F_TCP6), fp_udp6(F_UDP6);
 	string data;
 
-	vector<vector<string> > table_data;
+	vector<vector<string> > tcp_data, tcp6_data, udp_data, udp6_data;
+
+	tcp_data = read_data(fp_tcp, "tcp");
+	tcp6_data = read_data(fp_tcp6, "tcp6");
+	tcp_data.insert(tcp_data.end(), tcp6_data.begin()+1, tcp6_data.end() );
+	output_result("TCP", tcp_data);
+
+	udp_data = read_data(fp_udp, "udp");
+	udp6_data = read_data(fp_udp6, "udp6");
+	udp_data.insert(udp_data.end(), udp6_data.begin()+1	, udp6_data.end() );
+	for(int i=0; i<udp_data.size(); i++) {
+		if(udp_data[i].size() < 9) continue;
+		cout << i << udp_data[i][0] << udp_data[i][0] << endl;
+	}
+	output_result("UDP", udp_data);
 
 	
-
-	table_data = read_data(fp_tcp, "tcp");
-	output_result("TCP", table_data);
-
-	table_data = read_data(fp_tcp6, "tcp6");
-	output_result("TCP", table_data);
 
 	string a = "0000000000000000FFFF0000BF00A8C0";
 	cout << a.length();
