@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 
 using namespace std;
 
@@ -90,10 +91,10 @@ string search_fd(string inode)
 				find_inode(match_node, readlink_buf_str);
 				if(match_node != "") {
 					if(match_node == inode) {
-						char status[100] = "/proc/";
-						strcat(status, dp->d_name);
-						strcat(status, "/status");
-						ifstream fp_status(status);
+						char status_path[100] = "/proc/";
+						strcat(status_path, dp->d_name);
+						strcat(status_path, "/status");
+						ifstream fp_status(status_path);
 						if(!fp_status) {
 							return "";
 						}
@@ -101,9 +102,7 @@ string search_fd(string inode)
 						vector<string> para;
 						getline(fp_status, data);
 						para = split(data, "\t");
-						
-						//cout << para[1] << endl;
-						// printf("%s\t\t%s\n", fd_path, match_node.c_str());
+
 						return para[1];
 					}
 				}
@@ -174,9 +173,15 @@ void output_result(char *proto_type, vector<vector<string> > table_data)
 
 				// ip
 				if(tmp_ip[0].length() == 8) {
+					// cout << tmp_ip[0] << '\t';
 					hex_to_ip4(tmp_ip[0]);
 				} else if(tmp_ip[0].length() == 32) {
-					cout << tmp_ip[0];
+					// cout << tmp_ip[0];
+					struct in_addr sa;
+					sa.s_addr = (int)strtol(tmp_ip[0].c_str(), NULL, 16);
+					char strA[50];
+					inet_ntop(AF_INET6, &sa.s_addr, strA, sizeof strA);
+					cout << strA;
 				}
 
 				// port
@@ -211,7 +216,7 @@ vector<vector<string> > read_data(ifstream &fp, string proto)
 	return res;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 	ifstream fp_tcp(F_TCP), fp_udp(F_UDP), fp_tcp6(F_TCP6), fp_udp6(F_UDP6);
 	string data;
@@ -221,22 +226,19 @@ int main()
 	tcp_data = read_data(fp_tcp, "tcp");
 	tcp6_data = read_data(fp_tcp6, "tcp6");
 	tcp_data.insert(tcp_data.end(), tcp6_data.begin()+1, tcp6_data.end() );
-	output_result("TCP", tcp_data);
 
 	udp_data = read_data(fp_udp, "udp");
 	udp6_data = read_data(fp_udp6, "udp6");
-	udp_data.insert(udp_data.end(), udp6_data.begin()+1	, udp6_data.end() );
-	for(int i=0; i<udp_data.size(); i++) {
-		if(udp_data[i].size() < 9) continue;
-		cout << i << udp_data[i][0] << udp_data[i][0] << endl;
+	udp_data.insert(udp_data.end(), udp6_data.begin()+1	, udp6_data.end()-1);
+
+	if(argc == 1) {
+		output_result("TCP", tcp_data);
+		cout << "\n";
+		output_result("UDP", udp_data);
+	} else if(argc == 2) {
+		if(strcmp(argv[1],"-t") || strcmp(argv[1], "--tcp")) output_result("TCP", tcp_data);
+		else if(strcmp(argv[1], "-u") || strcmp(argv[1], "--udp")) output_result("UDP", udp_data);
 	}
-	output_result("UDP", udp_data);
-
-	
-
-	string a = "0000000000000000FFFF0000BF00A8C0";
-	cout << a.length();
 	
 	return 0;
 }
-
