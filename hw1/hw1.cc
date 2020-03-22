@@ -1,4 +1,8 @@
 #include "src/util.h"
+#include <unistd.h>
+#include <stdio.h>
+
+#include <getopt.h>
 
 char *F_TCP = "/proc/net/tcp";
 char *F_UDP = "/proc/net/udp";
@@ -12,28 +16,38 @@ int main(int argc, char *argv[])
 	string data;
 	char *filter = "";
 	bool udp_f = false, tcp_f = false;
-	regex udp_r_("-u");
-	regex udp_r__("--udp");
-	regex tcp_r_("-t");
-	regex tcp_r__("--tcp");
 
-	// check flag
-	for(int i=1; i<argc; i++) {
-		if(regex_match(string(argv[i]), udp_r_) || regex_match(string(argv[i]), udp_r__)) {
-			udp_f = true;
-		}
-		else if(regex_match(string(argv[i]), tcp_r_) || regex_match(string(argv[i]), tcp_r__)) {
-			tcp_f = true;
-		}
-		else {
-			if(strcmp(filter, "") == 0) {
-				filter = argv[i];
-			} else {
-				cout << "Use:  [-t|--tcp] [-u|--udp] [filter-string]" << endl;
+	const char *optstring = "uth";
+	int f_u = -1, f_t = -1, f_h = -1, opt_index = -1; 
+	int c;
+	const option opts[] = {
+        {"udp", 0, NULL, 'u'},
+        {"tcp", 0, NULL, 't'},
+        {"help", 0, NULL, 'h'}
+    };
+
+	while((c = getopt_long(argc, argv, optstring, opts, &opt_index)) != -1) {
+        switch(c) {
+            case 'u':
+				if(argc == 3) {
+					filter = argv[2];
+				}
+				udp_f = true;
+                break;
+            case 't':
+                if(argc == 3) {
+					filter = argv[2];
+				}
+				tcp_f = true;
+                break;
+            case 'h':
+                cout << "Usage:  [-t|--tcp] [-u|--udp] [filter-string]" << endl;
 				return 0;
-			}
-		}
-	}
+            case '?':
+                cout << "Usage:  [-t|--tcp] [-u|--udp] [filter-string]" << endl;
+				return 0;
+        }
+    }
 
 	vector<vector<string> > tcp_data, tcp6_data, udp_data, udp6_data;
 	vector<Proc*> tcp_p, udp_p;

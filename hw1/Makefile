@@ -1,21 +1,21 @@
 CC = g++
-COPS = -Wall -fsanitize=address
-OPS = -Wall -std=c++11
+#OPS = -Wall -fsanitize=address
+OPS = -std=c++11
 SRCS = $(wildcard *.cc)
 OBJS = $(SRCS:.cc=.o)
 
-all: hw1.out
+all: hw1
 
 .PHONY: clean all run
 
 %.o: %.cc
 	$(CC) $(OPS) -c $< -o $@
 
-hw1.out: $(OBJS)
+hw1: $(OBJS)
 	$(CC) $(OPS) -o $@ $<
 
 run:
-	./hw1.out
+	./hw1
 
 clean:
-	rm *o hw1.out
+	rm *.o hw1
