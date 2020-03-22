@@ -123,18 +123,35 @@ vector<string> search_fd(string inode)
 					if(match_node == inode) {
 						res[0] = dp->d_name;
 						char status_path[100] = "/proc/";
+						char cmd_path[100] = "/proc/";
+
+						strcat(cmd_path, dp->d_name);
+						strcat(cmd_path, "/cmdline");
 						strcat(status_path, dp->d_name);
 						strcat(status_path, "/status");
-						ifstream fp_status(status_path);
-						if(!fp_status) {
-							return res;
-						}
-						string data;
-						vector<string> para;
-						getline(fp_status, data);
-						para = split(data, "\t");
 
-						res[1] = para[1];
+						ifstream fp_cmd(cmd_path);
+						if(fp_cmd) {
+							string data;
+							getline(fp_cmd, data);
+							if(data[0] != '/') {
+								res[1] = data;
+							}
+						}
+
+						if(res[1] == "") {
+							ifstream fp_status(status_path);
+							if(!fp_status) {
+								return res;
+							}
+							string data;
+							vector<string> para;
+							getline(fp_status, data);
+							para = split(data, "\t");
+
+							res[1] = para[1];
+						}
+						
 						return res;
 					}
 				}
