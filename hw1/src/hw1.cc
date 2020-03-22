@@ -103,9 +103,11 @@ vector<string> search_fd(string inode)
 		char checkpath[100] = "/proc/";
 		strcat(checkpath, dp->d_name);
 		strcat(checkpath, "/fd/");
-		DIR *check_dir = opendir(checkpath);
-		if (check_dir) {
-			DIR *sub_dir = opendir(checkpath);
+		// DIR *check_dir = opendir(checkpath);
+		DIR *sub_dir = opendir(checkpath);
+		
+		if (sub_dir) {
+			// DIR *sub_dir = opendir(checkpath);
 			while(sub_dp = readdir(sub_dir)) {
 				char fd_path[100];
 				char readlink_buf[100];
@@ -137,7 +139,7 @@ vector<string> search_fd(string inode)
 					}
 				}
 			}
-			closedir(check_dir);
+			closedir(sub_dir);
 		}
     }
     closedir(dir); 
@@ -162,26 +164,8 @@ string hex_to_port(string input)
 vector<Proc*> get_result(vector<vector<string> > table_data, char *proto_type)
 {
 	vector<string> p_status;
-	// int width = 30;
-	// const char *table_head[5] = { "proto", "Local Address", "Foreign Address", "INODE", "PID/Program name and arguments" };
-
-	// // print banner
-	// char *banner = "List of %s connetcions:\n";
-	// printf(banner, proto_type);
-
-	// // print table head
-	// for(int i=0; i<5; i++) {
-	// 	if(i == 0 || i ==3) {
-	// 		cout << left << setw(int(width/2)) << table_head[i];
-	// 		continue;
-	// 	}
-	// 	cout << left << setw(width) << table_head[i];
-	// }
-	// cout << "\n";
-
 	vector<Proc*> p_v;
 
-	// print table data
 	for(int i=0; i<table_data.size(); i++) {
 		if(i == 0) continue;
 		Proc *p = new Proc();
@@ -300,9 +284,10 @@ int main(int argc, char *argv[])
 	tcp6_data = read_data(fp_tcp6, "tcp6");
 	tcp_data.insert(tcp_data.end(), tcp6_data.begin()+1, tcp6_data.end() );
 
+
 	udp_data = read_data(fp_udp, "udp");
 	udp6_data = read_data(fp_udp6, "udp6");
-	udp_data.insert(udp_data.end(), udp6_data.begin()+1	, udp6_data.end()-1);
+	udp_data.insert(udp_data.end(), udp6_data.begin()+1	, udp6_data.end());
 
 	tcp_p = get_result(tcp_data, "TCP");
 	udp_p = get_result(udp_data, "UDP");
