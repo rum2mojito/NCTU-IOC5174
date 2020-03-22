@@ -193,65 +193,39 @@ vector<Proc*> get_result(vector<vector<string> > table_data, char *proto_type)
 				tmp_ip = split(table_data[i][j], ":");
 
 				// ip
+				struct in_addr sa;
+				sa.s_addr = (int)strtol(tmp_ip[0].c_str(), NULL, 16);
+				char ip_str[64];
 				if(tmp_ip[0].length() == 8) {
-					// cout << tmp_ip[0] << '\t';
-					// hex_to_ip4(tmp_ip[0]);
-					struct in_addr sa;
-					sa.s_addr = (int)strtol(tmp_ip[0].c_str(), NULL, 16);
-					char strB[20];
-					inet_ntop(AF_INET, &sa.s_addr, strB, sizeof strB);
-					if(j == 1) p->l_ip = strB;
-					else p->r_ip = strB;
+					inet_ntop(AF_INET, &sa.s_addr, ip_str, sizeof ip_str);
+					if(j == 1) p->l_ip = ip_str;
+					else p->r_ip = ip_str;
 				} else if(tmp_ip[0].length() == 32) {
-					// cout << tmp_ip[0];
-					struct in_addr sa;
-					sa.s_addr = (int)strtol(tmp_ip[0].c_str(), NULL, 16);
-					char strA[50];
-					inet_ntop(AF_INET6, &sa.s_addr, strA, sizeof strA);
-					// cout << strA;
-					if(j == 1) p->l_ip = strA;
-					else p->r_ip = strA;
+					inet_ntop(AF_INET6, &sa.s_addr, ip_str, sizeof ip_str);
+					if(j == 1) p->l_ip = ip_str;
+					else p->r_ip = ip_str;
 				}
 
 				// port
 				string port = hex_to_port(tmp_ip[1]);
 				if(j == 1) p->l_port = port;
 				else p->r_port = port;
-				// cout << "\t\t";
 			} 
 			else if(j == 0){
 				p->proto = table_data[i][j];
-				// cout << table_data[i][j] << "\t\t";
 			}
 		}
 		p_status = search_fd(table_data[i][9]);
 		p->p_name = p_status[1];
 		p->p_id = p_status[0];
 		p->inode = string(table_data[i][9]);
-		// if(p_name != "") {
-		// 	cout << "/" << p_name;
-		// }
-		// cout << "\n";
 		p_v.push_back(p);
 	}
-	
-	// for(int i=0; i<p_v.size(); i++) {
-	// 	cout << left << setw(int(width/2)) << p_v[i]->proto;
-	// 	cout << left << setw(width) << p_v[i]->l_ip+":"+p_v[i]->l_port;
-	// 	cout << left << setw(width) << p_v[i]->r_ip+":"+p_v[i]->r_port;
-	// 	cout << left << setw(int(width/2)) << p_v[i]->inode;
-	// 	if(p_v[i]->p_id != "") {
-	// 		cout << left << setw(width) << p_v[i]->p_id+"/"+p_v[i]->p_name;
-	// 	} else {
-	// 		cout << left << setw(width) << "-";
-	// 	}
-	// 	cout << "\n";
-	// }
 
 	return p_v;
 }
 
-void output_result(vector<Proc*> p_v, char *proto_type) {
+void output_result(vector<Proc*> p_v, char *proto_type, char*filter) {
 	int width = 30;
 	const char *table_head[5] = { "proto", "Local Address", "Foreign Address", "INODE", "PID/Program name and arguments" };
 
@@ -262,7 +236,7 @@ void output_result(vector<Proc*> p_v, char *proto_type) {
 	// print table head
 	for(int i=0; i<5; i++) {
 		if(i == 0 || i ==3) {
-			cout << left << setw(int(width/2)) << table_head[i];
+			cout << left << setw(int(width/3)) << table_head[i];
 			continue;
 		}
 		cout << left << setw(width) << table_head[i];
@@ -270,16 +244,31 @@ void output_result(vector<Proc*> p_v, char *proto_type) {
 	cout << "\n";
 
 	for(int i=0; i<p_v.size(); i++) {
-		cout << left << setw(int(width/2)) << p_v[i]->proto;
-		cout << left << setw(width) << p_v[i]->l_ip+":"+p_v[i]->l_port;
-		cout << left << setw(width) << p_v[i]->r_ip+":"+p_v[i]->r_port;
-		cout << left << setw(int(width/2)) << p_v[i]->inode;
-		if(p_v[i]->p_id != "") {
-			cout << left << setw(width) << p_v[i]->p_id+"/"+p_v[i]->p_name;
-		} else {
-			cout << left << setw(width) << "-";
+		bool flag = true;
+		if(filter != "") {
+			flag = false;
+			if(strstr(p_v[i]->proto.c_str(), filter)) flag = true;
+			if(strstr(p_v[i]->l_ip.c_str(), filter)) flag = true;
+			if(strstr(p_v[i]->l_port.c_str(), filter)) flag = true;
+			if(strstr(p_v[i]->r_ip.c_str(), filter)) flag = true;
+			if(strstr(p_v[i]->r_port.c_str(), filter)) flag = true;
+			if(strstr(p_v[i]->inode.c_str(), filter)) flag = true;
+			if(strstr(p_v[i]->p_id.c_str(), filter)) flag = true;
+			if(strstr(p_v[i]->p_name.c_str(), filter)) flag = true;
 		}
-		cout << "\n";
+
+		if(flag) {
+			cout << left << setw(int(width/3)) << p_v[i]->proto;
+			cout << left << setw(width) << p_v[i]->l_ip+":"+p_v[i]->l_port;
+			cout << left << setw(width) << p_v[i]->r_ip+":"+p_v[i]->r_port;
+			cout << left << setw(int(width/3)) << p_v[i]->inode;
+			if(p_v[i]->p_id != "") {
+				cout << left << setw(width) << p_v[i]->p_id+"/"+p_v[i]->p_name;
+			} else {
+				cout << left << setw(width) << "-";
+			}
+			cout << "\n";
+		}
 	}
 }
 
@@ -302,6 +291,7 @@ int main(int argc, char *argv[])
 {
 	ifstream fp_tcp(F_TCP), fp_udp(F_UDP), fp_tcp6(F_TCP6), fp_udp6(F_UDP6);
 	string data;
+	char *filter;
 
 	vector<vector<string> > tcp_data, tcp6_data, udp_data, udp6_data;
 	vector<Proc*> tcp_p, udp_p;
@@ -316,22 +306,26 @@ int main(int argc, char *argv[])
 
 	tcp_p = get_result(tcp_data, "TCP");
 	udp_p = get_result(udp_data, "UDP");
+	filter = "";
 
 	if(argc == 1) {
-		output_result(tcp_p, "TCP");
+		output_result(tcp_p, "TCP", filter);
 		cout << "\n";
-		output_result(udp_p, "UDP");
+		output_result(udp_p, "UDP", filter);
 	} 
-	else if(argc == 2) {
-		
+	else if(argc >= 2) {
+		if(argc > 2) {
+			filter = argv[2];
+		}
 		if(strcmp(argv[1],"-t") == 0 || strcmp(argv[1], "--tcp") == 0) {
-			output_result(tcp_p, "TCP");
+			output_result(tcp_p, "TCP", filter);
 		}
 		else if(strcmp(argv[1], "-u")  == 0 || strcmp(argv[1], "--udp") == 0) {
-			output_result(udp_p, "UDP");
+			output_result(udp_p, "UDP", filter);
 		}
 		else {
-			cout << "Bad args<" << argv[1] << ">" << endl;
+			cout << "Bad args <" << argv[1] << ">" << endl;
+			cout << "Use: [-t | -u][filter]" << endl;
 		}
 	}
 	
