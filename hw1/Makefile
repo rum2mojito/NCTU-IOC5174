@@ -1,6 +1,6 @@
 CC = g++
 COPS = -Wall -fsanitize=address
-OPS = -Wall
+OPS = -Wall -std=c++11
 SRCS = $(wildcard *.cc)
 OBJS = $(SRCS:.cc=.o)
 

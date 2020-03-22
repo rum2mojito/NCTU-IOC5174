@@ -1,23 +1,21 @@
+#ifndef __UTIL__
+#define __UTIL__
+
 #include <iostream>
 #include <fstream>
 #include <string.h>
 #include <cstdlib>
 #include <vector>
-#include<bits/stdc++.h> 
+#include <bits/stdc++.h> 
 #include <dirent.h>
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string>
+#include<regex>
 
 using namespace std;
-
-char *F_TCP = "/proc/net/tcp";
-char *F_UDP = "/proc/net/udp";
-char *F_TCP6 = "/proc/net/tcp6";
-char *F_UDP6 = "/proc/net/udp6";
-char *FD = "/proc/%s/fd/";
 
 class Proc{
 public:
@@ -246,7 +244,7 @@ void output_result(vector<Proc*> p_v, char *proto_type, char*filter) {
 
 	for(int i=0; i<p_v.size(); i++) {
 		bool flag = true;
-		if(filter != "") {
+		if(strcmp(filter, "") != 0) {
 			flag = false;
 			if(strstr(p_v[i]->proto.c_str(), filter)) flag = true;
 			if(strstr(p_v[i]->l_ip.c_str(), filter)) flag = true;
@@ -271,6 +269,7 @@ void output_result(vector<Proc*> p_v, char *proto_type, char*filter) {
 			cout << "\n";
 		}
 	}
+	cout << "\n";
 }
 
 vector<vector<string> > read_data(ifstream &fp, string proto)
@@ -288,48 +287,4 @@ vector<vector<string> > read_data(ifstream &fp, string proto)
 	return res;
 }
 
-int main(int argc, char *argv[])
-{
-	ifstream fp_tcp(F_TCP), fp_udp(F_UDP), fp_tcp6(F_TCP6), fp_udp6(F_UDP6);
-	string data;
-	char *filter;
-
-	vector<vector<string> > tcp_data, tcp6_data, udp_data, udp6_data;
-	vector<Proc*> tcp_p, udp_p;
-
-	tcp_data = read_data(fp_tcp, "tcp");
-	tcp6_data = read_data(fp_tcp6, "tcp6");
-	tcp_data.insert(tcp_data.end(), tcp6_data.begin()+1, tcp6_data.end() );
-
-
-	udp_data = read_data(fp_udp, "udp");
-	udp6_data = read_data(fp_udp6, "udp6");
-	udp_data.insert(udp_data.end(), udp6_data.begin()+1	, udp6_data.end());
-
-	tcp_p = get_result(tcp_data, "TCP");
-	udp_p = get_result(udp_data, "UDP");
-	filter = "";
-
-	if(argc == 1) {
-		output_result(tcp_p, "TCP", filter);
-		cout << "\n";
-		output_result(udp_p, "UDP", filter);
-	} 
-	else if(argc >= 2) {
-		if(argc > 2) {
-			filter = argv[2];
-		}
-		if(strcmp(argv[1],"-t") == 0 || strcmp(argv[1], "--tcp") == 0) {
-			output_result(tcp_p, "TCP", filter);
-		}
-		else if(strcmp(argv[1], "-u")  == 0 || strcmp(argv[1], "--udp") == 0) {
-			output_result(udp_p, "UDP", filter);
-		}
-		else {
-			cout << "Bad args <" << argv[1] << ">" << endl;
-			cout << "Use:  [-t|--tcp] [-u|--udp] [filter-string]" << endl;
-		}
-	}
-	
-	return 0;
-}
+#endif
