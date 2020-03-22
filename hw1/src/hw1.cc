@@ -310,7 +310,7 @@ int main(int argc, char *argv[])
 		}
 		else {
 			cout << "Bad args <" << argv[1] << ">" << endl;
-			cout << "Use: [-t | -u][filter]" << endl;
+			cout << "Use:  [-t|--tcp] [-u|--udp] [filter-string]" << endl;
 		}
 	}
 	
