@@ -28,6 +28,7 @@ public:
 	string r_ip;
 	string r_port;
 	string inode;
+	string p_id;
 
 	Proc() {
 		proto = "";
@@ -37,6 +38,7 @@ public:
 		r_ip = "";
 		r_port = "";
 		inode = "";
+		p_id = "";
 	}
 };
 
@@ -84,13 +86,17 @@ vector<string> split(const string &str, const string &delim)
 	return res;
 }
 
-string search_fd(string inode)
+vector<string> search_fd(string inode)
 {
+	// vector<string> [0]: p_id; [1]: p_name
 	struct dirent *dp;
 	struct dirent *sub_dp;
     char *fullpath;
+	vector<string> res(2);
     const char *path="/proc/";
 
+	res[0] = "";
+	res[1] = "";
     DIR *dir = opendir(path);
     while (dp=readdir(dir))
     {
@@ -113,19 +119,21 @@ string search_fd(string inode)
 				find_inode(match_node, readlink_buf_str);
 				if(match_node != "") {
 					if(match_node == inode) {
+						res[0] = dp->d_name;
 						char status_path[100] = "/proc/";
 						strcat(status_path, dp->d_name);
 						strcat(status_path, "/status");
 						ifstream fp_status(status_path);
 						if(!fp_status) {
-							return "";
+							return res;
 						}
 						string data;
 						vector<string> para;
 						getline(fp_status, data);
 						para = split(data, "\t");
 
-						return para[1];
+						res[1] = para[1];
+						return res;
 					}
 				}
 			}
@@ -133,7 +141,7 @@ string search_fd(string inode)
 		}
     }
     closedir(dir); 
-	return "";
+	return res;
 }
 
 string hex_to_port(string input)
@@ -151,41 +159,25 @@ string hex_to_port(string input)
 	}
 }
 
-void hex_to_ip4(string input)
+vector<Proc*> get_result(vector<vector<string> > table_data, char *proto_type)
 {
-    char *output;
-	string tmp = "";
-	vector<unsigned int> res(4);
+	vector<string> p_status;
+	// int width = 30;
+	// const char *table_head[5] = { "proto", "Local Address", "Foreign Address", "INODE", "PID/Program name and arguments" };
 
-	// reverse(input.begin(), input.end());
-	for(int i=0; i<input.length(); i++) {
-		tmp += input[i];
-		if(i%2 == 1) {
-			unsigned int number = (int) strtol(tmp.c_str(), NULL, 16);
-			res[(int) i/2] = number;
-			tmp = "";
-		}
-	}
-    
-	char *IP_V4 = "%d.%d.%d.%d";
-	printf(IP_V4, res[3], res[2], res[1], res[0]);
-}
+	// // print banner
+	// char *banner = "List of %s connetcions:\n";
+	// printf(banner, proto_type);
 
-void output_result(char *proto_type, vector<vector<string> > table_data)
-{
-	string p_name;
-	int width = 30;
-	const char *table_head[4] = { "proto", "Local Address", "Foreign Address", "PID/Program name and arguments" };
-
-	// print banner
-	char *banner = "List of %s connetcions:\n";
-	printf(banner, proto_type);
-
-	// print table head
-	for(int i=0; i<4; i++) {
-		cout << left << setw(width) << table_head[i];
-	}
-	cout << "\n";
+	// // print table head
+	// for(int i=0; i<5; i++) {
+	// 	if(i == 0 || i ==3) {
+	// 		cout << left << setw(int(width/2)) << table_head[i];
+	// 		continue;
+	// 	}
+	// 	cout << left << setw(width) << table_head[i];
+	// }
+	// cout << "\n";
 
 	vector<Proc*> p_v;
 
@@ -232,9 +224,10 @@ void output_result(char *proto_type, vector<vector<string> > table_data)
 				// cout << table_data[i][j] << "\t\t";
 			}
 		}
-		p_name = search_fd(table_data[i][9]);
-		p->p_name = p_name;
-		p->inode = table_data[i][9];
+		p_status = search_fd(table_data[i][9]);
+		p->p_name = p_status[1];
+		p->p_id = p_status[0];
+		p->inode = string(table_data[i][9]);
 		// if(p_name != "") {
 		// 	cout << "/" << p_name;
 		// }
@@ -242,11 +235,50 @@ void output_result(char *proto_type, vector<vector<string> > table_data)
 		p_v.push_back(p);
 	}
 	
+	// for(int i=0; i<p_v.size(); i++) {
+	// 	cout << left << setw(int(width/2)) << p_v[i]->proto;
+	// 	cout << left << setw(width) << p_v[i]->l_ip+":"+p_v[i]->l_port;
+	// 	cout << left << setw(width) << p_v[i]->r_ip+":"+p_v[i]->r_port;
+	// 	cout << left << setw(int(width/2)) << p_v[i]->inode;
+	// 	if(p_v[i]->p_id != "") {
+	// 		cout << left << setw(width) << p_v[i]->p_id+"/"+p_v[i]->p_name;
+	// 	} else {
+	// 		cout << left << setw(width) << "-";
+	// 	}
+	// 	cout << "\n";
+	// }
+
+	return p_v;
+}
+
+void output_result(vector<Proc*> p_v, char *proto_type) {
+	int width = 30;
+	const char *table_head[5] = { "proto", "Local Address", "Foreign Address", "INODE", "PID/Program name and arguments" };
+
+	// print banner
+	char *banner = "List of %s connetcions:\n";
+	printf(banner, proto_type);
+
+	// print table head
+	for(int i=0; i<5; i++) {
+		if(i == 0 || i ==3) {
+			cout << left << setw(int(width/2)) << table_head[i];
+			continue;
+		}
+		cout << left << setw(width) << table_head[i];
+	}
+	cout << "\n";
+
 	for(int i=0; i<p_v.size(); i++) {
-		cout << left << setw(width) << p_v[i]->proto;
+		cout << left << setw(int(width/2)) << p_v[i]->proto;
 		cout << left << setw(width) << p_v[i]->l_ip+":"+p_v[i]->l_port;
 		cout << left << setw(width) << p_v[i]->r_ip+":"+p_v[i]->r_port;
-		cout << left << setw(width) << p_v[i]->inode+"/"+p_v[i]->p_name;
+		cout << left << setw(int(width/2)) << p_v[i]->inode;
+		if(p_v[i]->p_id != "") {
+			cout << left << setw(width) << p_v[i]->p_id+"/"+p_v[i]->p_name;
+		} else {
+			cout << left << setw(width) << "-";
+		}
 		cout << "\n";
 	}
 }
@@ -272,6 +304,7 @@ int main(int argc, char *argv[])
 	string data;
 
 	vector<vector<string> > tcp_data, tcp6_data, udp_data, udp6_data;
+	vector<Proc*> tcp_p, udp_p;
 
 	tcp_data = read_data(fp_tcp, "tcp");
 	tcp6_data = read_data(fp_tcp6, "tcp6");
@@ -281,13 +314,25 @@ int main(int argc, char *argv[])
 	udp6_data = read_data(fp_udp6, "udp6");
 	udp_data.insert(udp_data.end(), udp6_data.begin()+1	, udp6_data.end()-1);
 
+	tcp_p = get_result(tcp_data, "TCP");
+	udp_p = get_result(udp_data, "UDP");
+
 	if(argc == 1) {
-		output_result("TCP", tcp_data);
+		output_result(tcp_p, "TCP");
 		cout << "\n";
-		output_result("UDP", udp_data);
-	} else if(argc == 2) {
-		if(strcmp(argv[1],"-t") || strcmp(argv[1], "--tcp")) output_result("TCP", tcp_data);
-		else if(strcmp(argv[1], "-u") || strcmp(argv[1], "--udp")) output_result("UDP", udp_data);
+		output_result(udp_p, "UDP");
+	} 
+	else if(argc == 2) {
+		
+		if(strcmp(argv[1],"-t") == 0 || strcmp(argv[1], "--tcp") == 0) {
+			output_result(tcp_p, "TCP");
+		}
+		else if(strcmp(argv[1], "-u")  == 0 || strcmp(argv[1], "--udp") == 0) {
+			output_result(udp_p, "UDP");
+		}
+		else {
+			cout << "Bad args<" << argv[1] << ">" << endl;
+		}
 	}
 	
 	return 0;
