@@ -246,14 +246,18 @@ void output_result(vector<Proc*> p_v, char *proto_type, char*filter) {
 		bool flag = true;
 		if(strcmp(filter, "") != 0) {
 			flag = false;
-			if(strstr(p_v[i]->proto.c_str(), filter)) flag = true;
-			if(strstr(p_v[i]->l_ip.c_str(), filter)) flag = true;
-			if(strstr(p_v[i]->l_port.c_str(), filter)) flag = true;
-			if(strstr(p_v[i]->r_ip.c_str(), filter)) flag = true;
-			if(strstr(p_v[i]->r_port.c_str(), filter)) flag = true;
-			if(strstr(p_v[i]->inode.c_str(), filter)) flag = true;
-			if(strstr(p_v[i]->p_id.c_str(), filter)) flag = true;
-			if(strstr(p_v[i]->p_name.c_str(), filter)) flag = true;
+			char reg_str[100] = ".*";
+			strcat(reg_str, filter);
+			strcat(reg_str, ".*");
+			regex filter_reg(reg_str);
+			if(regex_match(p_v[i]->proto, filter_reg)) flag = true;
+			if(regex_match(p_v[i]->l_ip, filter_reg)) flag = true;
+			if(regex_match(p_v[i]->l_port, filter_reg)) flag = true;
+			if(regex_match(p_v[i]->r_ip, filter_reg)) flag = true;
+			if(regex_match(p_v[i]->r_port, filter_reg)) flag = true;
+			if(regex_match(p_v[i]->inode, filter_reg)) flag = true;
+			if(regex_match(p_v[i]->p_id, filter_reg)) flag = true;
+			if(regex_match(string(p_v[i]->p_name), filter_reg)) flag = true;
 		}
 
 		if(flag) {

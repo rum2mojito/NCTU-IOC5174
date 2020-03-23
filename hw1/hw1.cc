@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
 	udp_p = get_result(udp_data, "UDP");
 
 	if(!tcp_f && !udp_f) {
+		if(argc == 2) filter = argv[1];
 		output_result(tcp_p, "TCP", filter);
 		output_result(udp_p, "UDP", filter);
 	} else {
