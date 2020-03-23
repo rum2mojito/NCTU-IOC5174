@@ -176,6 +176,24 @@ string hex_to_port(string input)
 	}
 }
 
+char* ipv6IpConvert(string ipHex)
+{
+	struct in6_addr tmp_ip;
+	char *ipStr = (char*)malloc(128 * sizeof(char)) ;
+
+	if (sscanf(ipHex.c_str(),
+		"%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx",
+		&tmp_ip.s6_addr[3], &tmp_ip.s6_addr[2], &tmp_ip.s6_addr[1], &tmp_ip.s6_addr[0],
+		&tmp_ip.s6_addr[7], &tmp_ip.s6_addr[6], &tmp_ip.s6_addr[5], &tmp_ip.s6_addr[4],
+		&tmp_ip.s6_addr[11], &tmp_ip.s6_addr[10], &tmp_ip.s6_addr[9], &tmp_ip.s6_addr[8],
+		&tmp_ip.s6_addr[15], &tmp_ip.s6_addr[14], &tmp_ip.s6_addr[13], &tmp_ip.s6_addr[12]) == 16) 
+	{
+		inet_ntop(AF_INET6, &tmp_ip, ipStr, sizeof(ipStr));
+	}
+
+	return ipStr;
+}
+
 vector<Proc*> get_result(vector<vector<string> > table_data, char *proto_type)
 {
 	vector<string> p_status;
@@ -194,15 +212,17 @@ vector<Proc*> get_result(vector<vector<string> > table_data, char *proto_type)
 				// ip
 				struct in_addr sa;
 				sa.s_addr = (int)strtol(tmp_ip[0].c_str(), NULL, 16);
-				char ip_str[64];
+				char ip_str[64], *ip6_str;
 				if(tmp_ip[0].length() == 8) {
 					inet_ntop(AF_INET, &sa.s_addr, ip_str, sizeof ip_str);
+					
 					if(j == 1) p->l_ip = ip_str;
 					else p->r_ip = ip_str;
 				} else if(tmp_ip[0].length() == 32) {
 					inet_ntop(AF_INET6, &sa.s_addr, ip_str, sizeof ip_str);
-					if(j == 1) p->l_ip = ip_str;
-					else p->r_ip = ip_str;
+					ip6_str = ipv6IpConvert(tmp_ip[0]);
+					if(j == 1) p->l_ip = ip6_str;
+					else p->r_ip = ip6_str;
 				}
 
 				// port
