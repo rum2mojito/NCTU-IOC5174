@@ -4,17 +4,18 @@ OPS = -std=c++11 -Wall
 
 all: sandbox sandbox.so
 
-.PHONY: clean all run
+.PHONY: clean all test
 
 
 sandbox.so: sandboxso.cc
-	$(CC) -Wall  -shared -fPIC  -o $@ $< -ldl
+	$(CC) $(OPS)  -shared -fPIC  -o $@ $< -ldl
 
 sandbox: sandbox.cc
 	$(CC) $(OPS) -o $@ $<
 
-run:
-	./sandbox
+test:
+	$(CC) $(OPS) -o test test.cc
+	./sandbox ./test
 
 clean:
 	rm sandbox sandbox.so

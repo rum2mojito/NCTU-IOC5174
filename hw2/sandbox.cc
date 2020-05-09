@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <getopt.h>
+#include <stdio.h>
 #include <string.h>
 
 using namespace std;
@@ -11,9 +12,12 @@ int main(int argc, char *argv[]) {
         -d: the base directory that is allowed to access, default = . \r\n\
         --: seperate the arguments for sandbox and for the executed command \r\n";
     
-    char cmd[] = "";
+    const char *cmd_t = "LD_PRELOAD=%s WORK_DIR=%s";
+    const char *cmd_cat = "%s %s";
+
     char so[] = "./sandbox.so";
     char dir[] = "./";
+    char cmd[5000];
 
     const char *opt_sring = "p:d:-:";
     int opt;
@@ -28,8 +32,6 @@ int main(int argc, char *argv[]) {
                 printf("so: %s\n", so);
                 break;
             case '-':
-                strcpy(cmd, optarg);
-                printf("cmd: %s\n", cmd);
                 break;
             default:
                 printf("%s", wrong_msg);
@@ -38,5 +40,15 @@ int main(int argc, char *argv[]) {
         }
     }
 
+
+    if(argc > optind) {
+        sprintf(cmd, cmd_t, so, dir);
+        for(int i=optind; i<argc; i++) {
+            sprintf(cmd, cmd_cat, cmd, argv[i]);
+        }
+        printf("%s\n", cmd);
+    }
+    system(cmd);
+    
     return 0;
 }
