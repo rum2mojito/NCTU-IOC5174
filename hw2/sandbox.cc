@@ -25,17 +25,23 @@ int main(int argc, char *argv[]) {
         switch(opt) {
             case 'd':
                 strcpy(dir, optarg);
+#ifdef DEGUB
                 printf("dir: %s\n", dir);
+#endif
                 break;
             case 'p':
                 strcpy(so, optarg);
+#ifdef DEGUB
                 printf("so: %s\n", so);
+#endif
                 break;
             case '-':
                 break;
             default:
                 printf("%s", wrong_msg);
-                // cout << optarg << endl;
+#ifdef DEBUG
+                printf("undefine: %s\n", optarg);
+#endif
                 break;
         }
     }
@@ -45,7 +51,9 @@ int main(int argc, char *argv[]) {
         for(int i=optind; i<argc; i++) {
             sprintf(cmd, cmd_cat, cmd, argv[i]);
         }
+#ifdef DEBUG
         printf("%s\n", cmd);
+#endif
         system(cmd);
     } else {
         printf("no command given.\n");
