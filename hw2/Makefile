@@ -1,22 +1,20 @@
 CC = g++
 #OPS = -Wall -fsanitize=address
-OPS = -std=c++11
-SRCS = $(wildcard *.cc)
-OBJS = $(SRCS:.cc=.o)
-TARGET = hw2
+OPS = -std=c++11 -Wall
 
-all: hw2
+all: sandbox sandbox.so
 
 .PHONY: clean all run
 
-%.o: %.cc
-	$(CC) $(OPS) -c $< -o $@
 
-hw2: $(OBJS)
+sandbox.so: sandboxso.cc
+	$(CC) -Wall  -shared -fPIC  -o $@ $< -ldl
+
+sandbox: sandbox.cc
 	$(CC) $(OPS) -o $@ $<
 
 run:
-	./$(TARGET)
+	./sandbox
 
 clean:
-	rm *.o $(TARGET)
+	rm sandbox sandbox.so
