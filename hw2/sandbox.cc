@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MAX_CMD 10000
+
 using namespace std;
 
 int main(int argc, char *argv[]) {
@@ -17,7 +19,7 @@ int main(int argc, char *argv[]) {
 
     char so[] = "./sandbox.so";
     char dir[] = "./";
-    char cmd[5000];
+    char cmd[MAX_CMD];
 
     const char *opt_sring = "p:d:-:";
     int opt;
@@ -42,7 +44,7 @@ int main(int argc, char *argv[]) {
 #ifdef DEBUG
                 printf("undefine: %s\n", optarg);
 #endif
-                break;
+                return 0;
         }
     }
 

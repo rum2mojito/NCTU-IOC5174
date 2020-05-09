@@ -17,6 +17,7 @@ sandbox: sandbox.cc
 test:
 	$(CC) $(OPS) -o test test.cc
 	./sandbox ./test
+	rm test
 
 clean:
 	rm sandbox sandbox.so
