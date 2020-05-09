@@ -40,15 +40,16 @@ int main(int argc, char *argv[]) {
         }
     }
 
-
     if(argc > optind) {
         sprintf(cmd, cmd_t, so, dir);
         for(int i=optind; i<argc; i++) {
             sprintf(cmd, cmd_cat, cmd, argv[i]);
         }
         printf("%s\n", cmd);
+        system(cmd);
+    } else {
+        printf("no command given.\n");
     }
-    system(cmd);
-    
+
     return 0;
 }
