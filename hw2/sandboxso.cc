@@ -25,6 +25,27 @@ int check_path_allowed(const char *path);
 
 char REAL_PATH_BUF[PATH_MAX];
 char REAL_WORK_DIR[PATH_MAX];
+int save_out;
+
+void redirect_output() {
+    // int out = open("/dev/tty", O_RDWR|O_CREAT|O_APPEND, 0600);
+    int out = (* (int (*)(const char *pathname, int flags, ...)) dlsym(RTLD_NEXT, "open"))("/dev/tty", O_RDWR|O_CREAT|O_APPEND, 0600);
+    if(out == -1) {
+        perror("cannot open /dev/tty"); 
+    }
+
+    save_out = dup(fileno(stdout));
+
+    if (dup2(out, fileno(stdout)) == -1) { 
+        perror("cannot redirect stdout");
+    }
+    close(out);
+}
+
+void redirect_output_back() {
+    dup2(save_out, fileno(stdout));
+    close(save_out);
+}
 
 int unlink(const char *pathname) {
 #ifdef DEBUG
@@ -412,14 +433,18 @@ int execl(const char *path, const char *arg, ...) {
 
 // [sandbox] execve(/bin/ls): not allowed
 void always_reject_msg(char *func_name, const char *path) {
+    redirect_output();
     printf("[sandbox] %s(%s) is not allowed\n", func_name, path);
     errno = EACCES;
+    redirect_output_back();
 }
 
 // [sandbox] opendir: access to / is not allowed
 void access_not_allowed_msg(const char *func_name, const char *path) {
+    redirect_output();
     printf("[sandbox] %s: access to %s is not allowed\n", func_name, path);
     errno = EACCES;
+    redirect_output_back();
 }
 
 /* checking path */
