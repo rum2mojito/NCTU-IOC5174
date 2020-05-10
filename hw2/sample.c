@@ -33,7 +33,6 @@ int main() {
 	symlink(FILE_A, FILE_B);
 	unlink(FILE_A);
 	execl(FILE_A, FILE_A, NULL);
-    printf("%d\n", rand());
 	execle(FILE_A, FILE_A, NULL, NULL);
 	execlp(FILE_A, FILE_A, NULL);
 	execv(FILE_A, argv);
