@@ -54,6 +54,18 @@ int symlink(const char *path1, const char *path2) {
     return (* (int (*)(const char *path1, const char *path2)) dlsym(RTLD_NEXT, __func__))(path1, path2);
 }
 
+int __lxstat(int ver, const char * path, struct stat64 * stat_buf) {
+#ifdef DEBUG
+    printf("[Debug] %s\n", __func__);
+#endif
+    if(check_path_allowed(path) != 0) {
+        access_not_allowed_msg(__func__, path);
+        return -1;
+    }
+
+    return (* (int (*)(int ver, const char * path, struct stat64 * stat_buf)) dlsym(RTLD_NEXT, __func__))(ver, path, stat_buf);
+}
+
 int __xstat64(int ver, const char * path, struct stat64 * stat_buf) {
 #ifdef DEBUG
     printf("[Debug] %s\n", __func__);
@@ -449,4 +461,3 @@ int check_path_allowed(const char *path) {
 
     return __check_path_allowed();
 }
-// check path end
