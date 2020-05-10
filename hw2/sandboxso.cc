@@ -54,6 +54,18 @@ int symlink(const char *path1, const char *path2) {
     return (* (int (*)(const char *path1, const char *path2)) dlsym(RTLD_NEXT, __func__))(path1, path2);
 }
 
+int __xstat64(int ver, const char * path, struct stat64 * stat_buf) {
+#ifdef DEBUG
+    printf("[Debug] %s\n", __func__);
+#endif
+    if(check_path_allowed(path) != 0) {
+        access_not_allowed_msg(__func__, path);
+        return -1;
+    }
+
+    return (* (int (*)(int ver, const char * path, struct stat64 * stat_buf)) dlsym(RTLD_NEXT, __func__))(ver, path, stat_buf);
+}
+
 int __xstat(int ver, const char * path, struct stat * stat_buf) {
 #ifdef DEBUG
     printf("[Debug] %s\n", __func__);
@@ -142,17 +154,76 @@ DIR *opendir(const char *name) {
     return (* (DIR *(*)(const char *name)) dlsym(RTLD_NEXT, __func__))(name);
 }
 
-int openat(int dirfd, const char *pathname, int flags, ...) {
+int openat64(int dirfd, const char *pathname, int flags, ...) {
     // TODO
 #ifdef DEBUG
     printf("[Debug] %s\n", __func__);
 #endif
+    mode_t mode ;
+
+    va_list al;
+	va_start(al, flags);
+	mode = va_arg(al, mode_t);
+	va_end(al);
+
     if(check_path_allowed(pathname) != 0) {
         access_not_allowed_msg(__func__, pathname);
         return -1;
     }
     
-    return -1;
+    if(mode > 0777) {
+        return (* (int (*)(const char *pathname, int flags, ...)) dlsym(RTLD_NEXT, __func__))(pathname, flags);
+    } else {
+        return (* (int (*)(const char *pathname, int flags, ...)) dlsym(RTLD_NEXT, __func__))(pathname, flags, mode);
+    }
+}
+
+int openat(int dirfd, const char *pathname, int flags, ...) {
+    // TODO
+#ifdef DEBUG
+    printf("[Debug] %s\n", __func__);
+#endif
+    mode_t mode ;
+
+    va_list al;
+	va_start(al, flags);
+	mode = va_arg(al, mode_t);
+	va_end(al);
+
+    if(check_path_allowed(pathname) != 0) {
+        access_not_allowed_msg(__func__, pathname);
+        return -1;
+    }
+    
+    if(mode > 0777) {
+        return (* (int (*)(const char *pathname, int flags, ...)) dlsym(RTLD_NEXT, __func__))(pathname, flags);
+    } else {
+        return (* (int (*)(const char *pathname, int flags, ...)) dlsym(RTLD_NEXT, __func__))(pathname, flags, mode);
+    }
+}
+
+int open64(const char *pathname, int flags, ...) {
+    // TODO
+#ifdef DEBUG
+    printf("[Debug] %s\n", __func__);
+#endif
+    mode_t mode ;
+
+    va_list al;
+	va_start(al, flags);
+	mode = va_arg(al, mode_t);
+	va_end(al);
+
+    if(check_path_allowed(pathname) != 0) {
+        access_not_allowed_msg(__func__, pathname);
+        return -1;
+    }
+
+    if(mode > 0777) {
+        return (* (int (*)(const char *pathname, int flags, ...)) dlsym(RTLD_NEXT, __func__))(pathname, flags);
+    } else {
+        return (* (int (*)(const char *pathname, int flags, ...)) dlsym(RTLD_NEXT, __func__))(pathname, flags, mode);
+    }
 }
 
 int open(const char *pathname, int flags, ...) {
@@ -160,12 +231,23 @@ int open(const char *pathname, int flags, ...) {
 #ifdef DEBUG
     printf("[Debug] %s\n", __func__);
 #endif
+    mode_t mode ;
+
+    va_list al;
+	va_start(al, flags);
+	mode = va_arg(al, mode_t);
+	va_end(al);
+
     if(check_path_allowed(pathname) != 0) {
         access_not_allowed_msg(__func__, pathname);
         return -1;
     }
 
-    return (* (int (*)(const char *pathname, int flags)) dlsym(RTLD_NEXT, __func__))(pathname, flags);
+    if(mode > 0777) {
+        return (* (int (*)(const char *pathname, int flags, ...)) dlsym(RTLD_NEXT, __func__))(pathname, flags);
+    } else {
+        return (* (int (*)(const char *pathname, int flags, ...)) dlsym(RTLD_NEXT, __func__))(pathname, flags, mode);
+    }
 }
 
 int mkdir(const char *path, mode_t mode) {
@@ -196,6 +278,18 @@ int link (const char *oldpath, const char *newpath) {
     return (* (int (*)(const char *oldpath, const char *newpath)) dlsym(RTLD_NEXT, __func__))(oldpath, newpath);
 }
 
+FILE *fopen64(const char *filename, const char *mode) {
+#ifdef DEBUG
+    printf("[Debug] %s\n", __func__);
+#endif
+    if(check_path_allowed(filename) != 0) {
+        access_not_allowed_msg(__func__, filename);
+        return NULL;
+    }
+
+    return (* (FILE *(*)(const char *filename, const char *mode)) dlsym(RTLD_NEXT, __func__))(filename, mode);
+}
+
 FILE *fopen(const char *filename, const char *mode) {
 #ifdef DEBUG
     printf("[Debug] %s\n", __func__);
@@ -206,6 +300,18 @@ FILE *fopen(const char *filename, const char *mode) {
     }
 
     return (* (FILE *(*)(const char *filename, const char *mode)) dlsym(RTLD_NEXT, __func__))(filename, mode);
+}
+
+int creat64(const char *pathname, mode_t mode) {
+#ifdef DEBUG
+    printf("[Debug] %s\n", __func__);
+#endif
+    if(check_path_allowed(pathname) != 0) {
+        access_not_allowed_msg(__func__, pathname);
+        return -1;
+    }
+
+    return (* (int (*)(const char *pathname, mode_t mode)) dlsym(RTLD_NEXT, __func__))(pathname, mode);
 }
 
 int creat(const char *pathname, mode_t mode) {
