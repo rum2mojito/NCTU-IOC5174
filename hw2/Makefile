@@ -6,9 +6,8 @@ all: sandbox sandbox.so
 
 .PHONY: clean all test
 
-
 sandbox.so: sandboxso.cc
-	$(CC) $(OPS)  -shared -fPIC  -o $@ $< -ldl
+	$(CC) $(OPS) -shared -fPIC $< -o $@ -ldl
 
 sandbox: sandbox.cc
 	$(CC) $(OPS) -o $@ $<
