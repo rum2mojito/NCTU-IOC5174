@@ -1,6 +1,5 @@
 CC = g++
-#OPS = -Wall -fsanitize=address
-#OPS = -std=c++11 -Wall -D DEBUG
+# OPS = -std=c++11 -Wall -D DEBUG
 OPS = -std=c++11 -Wall
 
 all: sandbox sandbox.so
