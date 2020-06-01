@@ -1,0 +1,2 @@
+or eax, 0x30
+done:

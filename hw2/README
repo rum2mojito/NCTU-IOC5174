@@ -1,0 +1,34 @@
+Following functions will be monitored:
+
+int unlink(const char *pathname);
+int symlink(const char *path1, const char *path2);
+int __lxstat(int ver, const char * path, struct stat64 * stat_buf);
+int __xstat64(int ver, const char * path, struct stat64 * stat_buf);
+int __xstat(int ver, const char * path, struct stat * stat_buf);
+int stat(const char *pathname, struct stat *statbuf);
+int rmdir(const char *path);
+int rename(const char *old_filename, const char *new_filename);
+int remove(const char *filename);
+ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
+DIR *opendir(const char *name);
+int openat64(int dirfd, const char *pathname, int flags, ...);
+int openat(int dirfd, const char *pathname, int flags, ...);
+int open64(const char *pathname, int flags, ...);
+int open(const char *pathname, int flags, ...);
+int mkdir(const char *path, mode_t mode);
+int link (const char *oldpath, const char *newpath);
+FILE *fopen64(const char *filename, const char *mode);
+FILE *fopen(const char *filename, const char *mode);
+int creat64(const char *pathname, mode_t mode);
+int creat(const char *pathname, mode_t mode);
+int chown(const char *path, uid_t owner, gid_t group);
+int chmod(const char *path, mode_t mode);
+int chdir(const char *path);
+
+int system(char *command);
+int execvp(const char *file, char *const argv[]);
+int execve(const char *filename, char *const argv[],char *const envp[]);
+int execv(const char *path, char *const argv[]);
+int execlp(const char *file, const char *arg, ...);
+int execle(const char *path, const char *arg, ...);
+int execl(const char *path, const char *arg, ...);
