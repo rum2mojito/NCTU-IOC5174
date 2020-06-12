@@ -29,10 +29,10 @@ int main(int argc, char *argv[]) {
 		ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL);
 		while(WIFSTOPPED(wait_status)) {
 			counter++;
-			if(ptrace(PTRACE_SINGLESTEP, child, 0, 0) < 0) errquit("ptrace@parent");
+			if(ptrace(PTRACE_SYSCALL, child, 0, 0) < 0) errquit("ptrace@parent");
 			if(waitpid(child, &wait_status, 0) < 0) errquit("wait");
 		}
-		fprintf(stderr, "## %11d instruction(s) executed\n", counter);
+		fprintf(stderr, "## %11d syscall(s)(entry+exit) executed\n", counter);
 	}
 	return 0;
 }
