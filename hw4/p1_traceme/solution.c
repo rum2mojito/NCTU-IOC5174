@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 		int status;
 		if(waitpid(child, &status, 0) < 0) errquit("waitpid");
 		assert(WIFSTOPPED(status));
-		ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL);
+		ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_TRACEEXEC);
 		ptrace(PTRACE_CONT, child, 0, 0);
 		waitpid(child, &status, 0);
 		perror("done");
