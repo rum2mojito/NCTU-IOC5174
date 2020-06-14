@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     errquit("execvp");
   } else {
     int wait_status;
-    int fd = open("./no_more_traps.txt", O_RDONLY);
+    int f = open("./no_more_traps.txt", O_RDONLY);
 
     waitpid(child, &wait_status, 0);
     ptrace(PTRACE_CONT, child, 0, 0);
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
         errquit("getregs");
       }
 
-      read(fd, target, 2);
+      read(f, target, 2);
       sscanf(target, "%lx", &patch);
 
       child_code = ptrace(PTRACE_PEEKTEXT, child, regs.rip - 1, 0);
@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
       }
       ptrace(PTRACE_CONT, child, 0, 0);
     }
+	close(f);
   }
 
   return 0;
