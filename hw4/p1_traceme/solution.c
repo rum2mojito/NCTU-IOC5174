@@ -6,7 +6,6 @@
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
-#define USE_PEEKUSER 1
 
 void errquit(const char *msg) {
 	perror(msg);
@@ -39,16 +38,15 @@ int main(int argc, char *argv[]) {
 			if((rip = ptrace(PTRACE_PEEKUSER, child, ((unsigned char *) &regs.rip) - ((unsigned char *) &regs), 0)) != 0) {
 #else
 			if(ptrace(PTRACE_GETREGS, child, 0, &regs) == 0) {
-				rip = regs.rip;
+				rip = regs.rax;
 #endif
-				ret = ptrace(PTRACE_PEEKTEXT, child, 0x201b80L, 0);
-				// printf("0x%11x: %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x\n", 
-				// 		rip,
-				// 		ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7]);
-				for(int i=0; i<63; i++) {
-					printf("%c", ptr[i]);
+				ret = ptrace(PTRACE_PEEKTEXT, child, rip, 0);
+				if((rip & 0xfff) == 0xb80) {
+					for(int i=0; i<37; i++) {
+						printf(" [%i] %c", i, ptr[i]);
+					}
+					printf("\n");
 				}
-				printf("\n");
 				
 			}
 			if(ptrace(PTRACE_SINGLESTEP, child, 0, 0) < 0) errquit("ptrace@parent");

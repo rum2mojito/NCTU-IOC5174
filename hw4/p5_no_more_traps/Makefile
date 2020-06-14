@@ -10,7 +10,7 @@ solution.o: $(TARGET)
 	$(CC) $< $(OPS) -o $@
 
 run:
-	./solution.o
+	./solution.o ./no_more_traps
 
 clean:
 	rm *.o
