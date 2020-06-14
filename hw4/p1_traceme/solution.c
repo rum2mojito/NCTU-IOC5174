@@ -27,25 +27,24 @@ int main(int argc, char *argv[]) {
     long long counter = 0LL;
     int wait_status;
     if (waitpid(child, &wait_status, 0) < 0) errquit("wait");
-    ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL);
+    // ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL);
     while (WIFSTOPPED(wait_status)) {
       long ret;
-      unsigned long long rip;
+      long rax;
       struct user_regs_struct regs;
-      unsigned char *ptr = (unsigned char *)&ret;
+      char *ptr = (char *)&ret;
       counter++;
-#if USE_PEEKUSER
-      if ((rip = ptrace(PTRACE_PEEKUSER, child,
-                        ((unsigned char *)&regs.rip) - ((unsigned char *)&regs),
-                        0)) != 0) {
-#else
       if (ptrace(PTRACE_GETREGS, child, 0, &regs) == 0) {
-        rip = regs.rax;
-#endif
-        ret = ptrace(PTRACE_PEEKTEXT, child, rip, 0);
-        if ((rip & 0xfff) == 0xb80) {
+        rax = regs.rax;
+        ret = ptrace(PTRACE_PEEKTEXT, child, rax, 0);
+        if ((rax & 0xfff) == 0xb80) {
+          printf("0x%11x(", rax);
+          printf("0x%11x): ", ptr);
           for (int i = 0; i < 37; i++) {
-            printf(" [%i] %c", i, ptr[i]);
+            if (*ptr < 30) break;
+            printf("%c", *ptr);
+            // 用指針會錯  rax register
+            ret = ptrace(PTRACE_PEEKTEXT, child, rax + i + 1, 0);
           }
           printf("\n");
         }
